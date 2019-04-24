@@ -24,20 +24,22 @@ http.createServer(function(req, res) {
           '}';
         res.end(display_message.toString());
       });
-    } else {
-      res.write("something wrong");
-    }
+    } 
   } else if (path == './login') {
-    select_data(qdata.user, qdata.pass);
+    select_data(qdata.user, qdata.pass, function(status, message) {
+        let display_message = '{"message" : "' + message + '", "status" : "' + status + '"}';
+        res.end(display_message.toString());
+      });
   } else {
-    console.log("Invalid");
+   let display_message = return_query_status("0", "Invalid api call");
+   res.end(display_message); 
   }
 }).listen(8080);
 
 function return_query_status(status, message) {
   var output_message = '{"message" : "' + message + '", "status" : ' + status +
     '}';
-  console.log(output_message);
+    
   return output_message;
 }
 
@@ -54,16 +56,26 @@ function insert_data(user, pass, callback) {
   });
 }
 
-function select_data(user, pass) {
+function select_data(user, pass,callback) {
   var sql = "SELECT user_id FROM login WHERE user_name = ? AND password = ?";
-  console.log(sql);
+ // console.log(sql);
   let data = [user, pass];
   con.query(sql, data,
     function(err, result, fields) {
-      if (err) throw err;
+      if (err) {
+      callback(0, "Something went wrong");
+    } else if(result.length == '1') {
+      console.log(result[0].user_id.toString());
+      callback("1", "Login Success");
+    }
+    else{
+      callback("0", "Login failed");
+    }
+  });
+      /*if (err) throw err;
       if (result.length == '1')
         console.log("Successful login!!");
       else
         console.log("Register");
-    });
+    });*/
 }
